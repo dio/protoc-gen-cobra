@@ -29,13 +29,14 @@ import (
 const generatedCodeVersion = 4
 
 func init() {
-	generator.RegisterPlugin(new(client))
+	generator.RegisterPlugin(&client{types: make(protoTypeCache)})
 }
 
 // client is an implementation of the Go protocol buffer compiler's
 // plugin architecture.  It generates bindings for gRPC support.
 type client struct {
-	gen *generator.Generator
+	gen   *generator.Generator
+	types protoTypeCache
 }
 
 // Name returns the name of this plugin, "client".
@@ -510,9 +511,8 @@ func (c *client) generateSubcommand(servName string, file *generator.FileDescrip
 	// TODO: fix below
 	_ = importName
 
-	types := make(protoTypeCache)
-	inputDesc, _, _ := types.byName(file.MessageType, inputType, noop /*prefix("// ", c.P)*/)
-	obj, reqArgFlags := c.generateRequestFlags(file, inputDesc, types)
+	inputDesc, _ := c.types.byName(file.MessageType, inputType, prefix("// ", c.P))
+	obj, reqArgFlags := c.generateRequestFlags(file, inputDesc, c.types)
 
 	var b bytes.Buffer
 	err := generateSubcommandTemplate.Execute(&b, struct {

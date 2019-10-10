@@ -28,6 +28,7 @@ message DeeplyNested {
         message DeeplyNestedInner {
             message DeeplyNestedInnermost {
                 string l3 = 1;
+                TopLevelNestedType top_level_nested = 2;
             }
             DeeplyNestedInnermost l2 = 1;
         }

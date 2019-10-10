@@ -211,8 +211,8 @@ func _NestedMessagesRoundTrip(sample interface{}, fn _NestedMessagesRoundTripFun
 
 func _NestedMessagesGetClientCommand() *cobra.Command {
 	reqArgs := &NestedRequest{
-		Inner:    &NestedRequest_InnerNestedType{},
 		TopLevel: &TopLevelNestedType{},
+		Inner:    &NestedRequest_InnerNestedType{},
 	}
 
 	cmd := &cobra.Command{
@@ -254,7 +254,9 @@ func _NestedMessagesGetDeeplyNestedClientCommand() *cobra.Command {
 	reqArgs := &DeeplyNested{
 		L0: &DeeplyNested_DeeplyNestedOuter{
 			L1: &DeeplyNested_DeeplyNestedOuter_DeeplyNestedInner{
-				L2: &DeeplyNested_DeeplyNestedOuter_DeeplyNestedInner_DeeplyNestedInnermost{},
+				L2: &DeeplyNested_DeeplyNestedOuter_DeeplyNestedInner_DeeplyNestedInnermost{
+					TopLevelNested: &TopLevelNestedType{},
+				},
 			},
 		},
 	}
@@ -289,6 +291,7 @@ func _NestedMessagesGetDeeplyNestedClientCommand() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVar(&reqArgs.L0.L1.L2.L3, "l0-l1-l2-l3", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.L0.L1.L2.TopLevelNested.Value, "l0-l1-l2-toplevelnested-value", "", "get-comment-from-proto")
 
 	return cmd
 }

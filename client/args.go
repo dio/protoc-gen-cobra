@@ -13,38 +13,39 @@ import (
 
 type protoTypeCache map[string]entry
 type entry struct {
-	d    *pb.DescriptorProto
-	f, n bool
+	d *pb.DescriptorProto
+	f bool
 }
 
-func (p protoTypeCache) byName(desc []*pb.DescriptorProto, name string, log func(...interface{})) (*pb.DescriptorProto, bool, bool) {
-	return byName(p, desc, name, false, log)
+func (p protoTypeCache) byName(desc []*pb.DescriptorProto, name string, log func(...interface{})) (*pb.DescriptorProto, bool) {
+	return byName(p, desc, name, log)
 }
 
-func byName(p protoTypeCache, desc []*pb.DescriptorProto, name string, nested bool, log func(...interface{})) (*pb.DescriptorProto, bool, bool) {
+func byName(p protoTypeCache, desc []*pb.DescriptorProto, name string, log func(...interface{})) (*pb.DescriptorProto, bool) {
 	log("searching for ", name)
 	if entry, found := p[name]; found {
 		log("* found ", entry.d.GetName(), "in cache ", fmt.Sprintf("%v", p))
-		return entry.d, entry.f, entry.n
+		return entry.d, entry.f
 	}
 
 	for _, d := range desc {
 		if d.GetName() == name {
-			p[name] = entry{d, true, nested}
+			p[name] = entry{d, true}
 			log("* comparing against ", d.GetName(), " inserting into cache: \n// ", fmt.Sprintf("%v", p))
-			return d, true, nested
+			return d, true
 		} else {
 			log("  comparing against ", d.GetName())
 		}
-		if desc, found, _ := byName(p, d.NestedType, name, true, prefix("    ", log)); found {
-			return desc, found, true
+		if desc, found := byName(p, d.NestedType, name, prefix("    ", log)); found {
+			return desc, found
 		}
 	}
-	return nil, false, false
+	return nil, false
 }
 
 func prefix(pre string, l func(...interface{})) func(...interface{}) {
-	return func(i ...interface{}) { l(append([]interface{}{pre}, i...)...) }
+	return noop
+	//return func(i ...interface{}) { l(append([]interface{}{pre}, i...)...) }
 }
 
 func noop(...interface{}) {}
@@ -77,7 +78,7 @@ func (c *client) generateSubMessageRequestFlags(objectName, flagPrefix string, d
 		case pb.FieldDescriptorProto_TYPE_MESSAGE:
 			// if both type and name are set, descriptor must be either a message or enum
 			_, _, ttype := inputNames(f.GetTypeName())
-			if fdesc, found, _ := types.byName(file.MessageType, ttype, noop /*prefix("// ", c.P)*/); found {
+			if fdesc, found := types.byName(file.MessageType, ttype, prefix("// ", c.P)); found {
 				if fdesc.GetOptions().GetMapEntry() {
 					// TODO
 					return []string{fmt.Sprintf(`.PersistentFlags() // Warning: map flags are not yet supported (message %q)`, d.GetName())}
@@ -151,26 +152,69 @@ func goFieldName(f *pb.FieldDescriptorProto) string {
 
 func (c *client) generateRequestInitialization(d *pb.DescriptorProto, file *generator.FileDescriptor, types protoTypeCache) string {
 	debug := &bytes.Buffer{}
-	initialize := genReqInit(d, file, types, "", false, debug, noop /*prefix("// ", c.P)*/)
+	initialize := genReqInit(d, file, types, false, debug, prefix("// ", c.P))
 	// c.P(debug.String())
 	return initialize
 }
 
-func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types protoTypeCache, typePrefix string, repeated bool, w io.Writer, log func(...interface{})) string {
+func listField(d *pb.FieldDescriptorProto) bool {
+	return d.GetLabel() == pb.FieldDescriptorProto_LABEL_REPEATED
+}
+
+func computeTypes(file *generator.FileDescriptor) map[string]string {
+	types := make(map[string]string)
+	for _, t := range file.MessageType {
+		types[t.GetName()] = t.GetName()
+		for _, nested := range t.NestedType {
+			for name, goname := range computeMessageTypes(nested) {
+				types[name] = t.GetName() + "_" + goname
+			}
+		}
+	}
+	return types
+}
+
+func computeMessageTypes(d *pb.DescriptorProto) map[string]string {
+	types := map[string]string{d.GetName(): d.GetName()}
+	for _, nested := range d.NestedType {
+		for name, goname := range computeMessageTypes(nested) {
+			types[name] = d.GetName() + "_" + goname
+		}
+	}
+	return types
+}
+
+func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types protoTypeCache, repeated bool, w io.Writer, log func(...interface{})) string {
+	computedTypes := computeTypes(file)
+	fmt.Fprintf(w, "// computed types:\n")
+	for name, goname := range computedTypes {
+		fmt.Fprintf(w, "//   %s => %s\n", name, goname)
+	}
+	fmt.Fprintf(w, "\n")
+
+	name, found := computedTypes[d.GetName()]
+	if !found {
+		return fmt.Sprintf("// failed to find %q in %v", d.GetName(), computedTypes)
+	}
+
 	if repeated {
 		// if we're repeated, we only want to compute the type then bail, we won't figure out if we're trying to create an instance
-		out := fmt.Sprintf("[]*%s%s{}", typePrefix, d.GetName())
+		out := fmt.Sprintf("[]*%s{}", name)
 		fmt.Fprintf(w, "// computed %q\n", out)
 		return out
 	}
 
 	fields := make(map[string]string)
-	fmt.Fprintf(w, "// generating initialization for %s with prefix %q which has %d fields\n", d.GetName(), typePrefix, len(d.Field))
+	fmt.Fprintf(w, "// generating initialization for %s which has %d fields\n", d.GetName(), len(d.Field))
 	for _, f := range d.Field {
 		switch f.GetType() {
 		case pb.FieldDescriptorProto_TYPE_MESSAGE:
 			_, _, ttype := inputNames(f.GetTypeName())
-			desc, found, nested := types.byName(file.MessageType, ttype, log)
+			if !found {
+				fmt.Fprintf(w, "// failed to find type %q for field %q", ttype, f.GetName())
+			}
+
+			desc, found := types.byName(file.MessageType, ttype, log)
 			fmt.Fprintf(w, "// searching for type %q with ttype %q for field %q\n", f.GetTypeName(), ttype, f.GetName())
 			if !found {
 				fmt.Fprint(w, "// not found, skipping\n")
@@ -182,13 +226,8 @@ func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types pro
 				continue
 			}
 
-			prefix := typePrefix
-			if nested {
-				prefix += d.GetName() + "_"
-			}
-
 			fmt.Fprintf(w, "// found, recursing with %q\n", desc.GetName())
-			m := genReqInit(desc, file, types, prefix, listField(f), w, log)
+			m := genReqInit(desc, file, types, listField(f), w, log)
 			fmt.Fprintf(w, "// found field %q which we'll initialize with %q\n", goFieldName(f), m)
 			fields[goFieldName(f)] = m
 		default:
@@ -205,13 +244,7 @@ func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types pro
 		values = fmt.Sprintf("{\n%s,\n}", strings.Join(vals, ",\n"))
 	}
 
-	prefix := fmt.Sprintf("&%s%s", typePrefix, d.GetName())
-
-	out := prefix + values
+	out := "&" + name + values
 	fmt.Fprintf(w, "// computed %q\n", out)
 	return out
-}
-
-func listField(d *pb.FieldDescriptorProto) bool {
-	return d.GetLabel() == pb.FieldDescriptorProto_LABEL_REPEATED
 }
