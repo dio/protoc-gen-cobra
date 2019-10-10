@@ -235,12 +235,16 @@ func (d *FileDescriptor) goPackageName() (name string, explicit bool) {
 }
 
 // goFileName returns the output name for the generated Go file.
-func (d *FileDescriptor) goFileName() string {
+func (d *FileDescriptor) goFileName(pathType pathType) string {
 	name := *d.Name
 	if ext := path.Ext(name); ext == ".proto" || ext == ".protodevel" {
 		name = name[:len(name)-len(ext)]
 	}
 	name += ".cobra.pb.go"
+
+	if pathType == pathTypeSourceRelative {
+		return name
+	}
 
 	// Does the file have a "go_package" option?
 	// If it does, it may override the filename.
@@ -306,9 +310,17 @@ type Generator struct {
 	usedPackages     map[string]bool            // Names of packages used in current file.
 	typeNameToObject map[string]Object          // Key is a fully-qualified name in input syntax.
 	init             []string                   // Lines to emit in the init function.
+	pathType         pathType                   // How to generate output filenames.
 	indent           string
 	writeOutput      bool
 }
+
+type pathType int
+
+const (
+	pathTypeImport pathType = iota
+	pathTypeSourceRelative
+)
 
 // New creates a new generator and allocates the request and response protobufs.
 func New() *Generator {
@@ -357,6 +369,15 @@ func (g *Generator) CommandLineParameters(parameter string) {
 			g.PackageImportPath = v
 		case "plugins":
 			pluginList = v
+		case "paths":
+			switch v {
+			case "import":
+				g.pathType = pathTypeImport
+			case "source_relative":
+				g.pathType = pathTypeSourceRelative
+			default:
+				g.Fail(fmt.Sprintf(`Unknown path type %q: want "import" or "source_relative".`, v))
+			}
 		default:
 			if len(k) > 0 && k[0] == 'M' {
 				g.ImportMap[k[1:]] = v
@@ -759,7 +780,7 @@ func (g *Generator) GenerateAllFiles() {
 			continue
 		}
 		g.Response.File = append(g.Response.File, &plugin.CodeGeneratorResponse_File{
-			Name:    proto.String(file.goFileName()),
+			Name:    proto.String(file.goFileName(g.pathType)),
 			Content: proto.String(g.String()),
 		})
 	}
