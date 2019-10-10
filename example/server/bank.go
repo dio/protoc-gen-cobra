@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/tetratelabs/protoc-gen-cobra/example/pb"
+	"github.com/dio/protoc-gen-cobra/example/pb"
 )
 
 type Bank struct {

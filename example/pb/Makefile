@@ -17,4 +17,4 @@ clean:
 
 deps:
 	go get github.com/gogo/protobuf/protoc-gen-gofast
-	go get github.com/tetratelabs/protoc-gen-cobra
+	go get github.com/dio/protoc-gen-cobra

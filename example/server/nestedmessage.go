@@ -3,7 +3,7 @@ package main
 import (
 	"golang.org/x/net/context"
 
-	"github.com/tetratelabs/protoc-gen-cobra/example/pb"
+	"github.com/dio/protoc-gen-cobra/example/pb"
 )
 
 type NestedMessage struct{}

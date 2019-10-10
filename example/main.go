@@ -15,8 +15,8 @@
 package main
 
 import (
-	"github.com/tetratelabs/protoc-gen-cobra/example/cmd"
-	"github.com/tetratelabs/protoc-gen-cobra/example/pb"
+	"github.com/dio/protoc-gen-cobra/example/cmd"
+	"github.com/dio/protoc-gen-cobra/example/pb"
 )
 
 func init() {

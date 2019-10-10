@@ -19,7 +19,7 @@ import (
 
 	pb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-	"github.com/tetratelabs/protoc-gen-cobra/generator"
+	"github.com/dio/protoc-gen-cobra/generator"
 )
 
 // generatedCodeVersion indicates a version of the generated code.
@@ -59,7 +59,7 @@ var importPkgsByName = importPkg{
 	"filepath":    {ImportPath: "path/filepath", KnownType: "WalkFunc"},
 	"grpc":        {ImportPath: "google.golang.org/grpc", KnownType: "ClientConn"},
 	"io":          {ImportPath: "io", KnownType: "Reader"},
-	"iocodec":     {ImportPath: "github.com/tetratelabs/protoc-gen-cobra/iocodec", KnownType: "Encoder"},
+	"iocodec":     {ImportPath: "github.com/dio/protoc-gen-cobra/iocodec", KnownType: "Encoder"},
 	"ioutil":      {ImportPath: "io/ioutil", KnownType: "=Discard"},
 	"json":        {ImportPath: "encoding/json", KnownType: "Encoder"},
 	"log":         {ImportPath: "log", KnownType: "Logger"},

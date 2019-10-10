@@ -18,7 +18,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	cobra "github.com/spf13/cobra"
 	pflag "github.com/spf13/pflag"
-	iocodec "github.com/tetratelabs/protoc-gen-cobra/iocodec"
+	iocodec "github.com/dio/protoc-gen-cobra/iocodec"
 	context "golang.org/x/net/context"
 	oauth2 "golang.org/x/oauth2"
 	grpc "google.golang.org/grpc"

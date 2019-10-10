@@ -23,7 +23,7 @@ import (
 	fmt1 "fmt"
 	grpc "google.golang.org/grpc"
 	io "io"
-	iocodec "github.com/tetratelabs/protoc-gen-cobra/iocodec"
+	iocodec "github.com/dio/protoc-gen-cobra/iocodec"
 	ioutil "io/ioutil"
 	json "encoding/json"
 	log "log"
