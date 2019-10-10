@@ -185,7 +185,7 @@ func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types pro
 			prefix := typePrefix
 			if nested {
 				for _, df := range d.Field {
-					if strings.Contains(df.GetTypeName(), d.GetName()) {
+					if strings.Contains(fmt.Sprintf(".%s.", df.GetTypeName()), d.GetName()) {
 						prefix += d.GetName() + "_"
 						break
 					}
