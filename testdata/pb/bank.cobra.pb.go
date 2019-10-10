@@ -32,7 +32,6 @@ import (
 	oauth2 "golang.org/x/oauth2"
 	os "os"
 	pflag "github.com/spf13/pflag"
-	proto1 "github.com/golang/protobuf/proto"
 	template "text/template"
 	time "time"
 	tls "crypto/tls"
@@ -229,7 +228,12 @@ func _BankRoundTrip(sample interface{}, fn _BankRoundTripFunc) error {
 }
 
 func _BankDepositClientCommand() *cobra.Command {
-	reqArgs := &DepositRequest{}
+	reqArgs := &DepositRequest{
+		Standalone: &NestedStandalone{},
+		InMessage: &DepositRequest_NestedInMessage{
+			InMessageAgain: &DepositRequest_NestedAgainInMessage{},
+		},
+	}
 
 	cmd := &cobra.Command{
 		Use:     "deposit",
@@ -260,8 +264,9 @@ func _BankDepositClientCommand() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&reqArgs.Account, "account", "", "get-comment-from-proto")
-	cmd.PersistentFlags().Float64Var(&reqArgs.Amount, "amount", 0, "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.Standalone.Val, "standalone-val", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.InMessage.InMessageAgain.Val, "inmessage-inmessageagain-val", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.InMessage.Val, "inmessage-val", "", "get-comment-from-proto")
 
 	return cmd
 }

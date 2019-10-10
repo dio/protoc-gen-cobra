@@ -184,7 +184,12 @@ func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types pro
 
 			prefix := typePrefix
 			if nested {
-				prefix += d.GetName() + "_"
+				for _, df := range d.Field {
+					if strings.Contains(df.GetTypeName(), d.GetName()) {
+						prefix += d.GetName() + "_"
+						break
+					}
+				}
 			}
 
 			fmt.Fprintf(w, "// found, recursing with %q\n", desc.GetName())

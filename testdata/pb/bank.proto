@@ -5,9 +5,18 @@ package pb;
 service Bank { rpc Deposit(DepositRequest) returns (DepositReply); }
 
 message DepositRequest {
-  string account = 1;
-  double amount = 2;
+  NestedStandalone standalone = 1;
+  NestedInMessage in_message = 2;
+
+  message NestedInMessage {
+    NestedAgainInMessage in_message_again = 1;
+    string val = 2;
+  }
+
+  message NestedAgainInMessage { string val = 1; }
 }
+
+message NestedStandalone { string val = 1; }
 
 message DepositReply {
   string account = 1;
