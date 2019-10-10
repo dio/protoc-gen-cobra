@@ -5,16 +5,35 @@ package pb;
 service Bank { rpc Deposit(DepositRequest) returns (DepositReply); }
 
 message DepositRequest {
-  NestedStandalone standalone = 1;
-  NestedInMessage in_message = 2;
+  string parent = 1;
+  string tenant = 2;
+  string environment = 3;
+  repeated ClusterWithNamespaces clusters = 4;
 
-  message NestedInMessage {
-    NestedAgainInMessage in_message_again = 1;
-    string val = 2;
-  }
+  ClusterWithNamespaces cluster_with_namespaces = 5;
+  string id = 6;
+  string name = 7;
 
-  message NestedAgainInMessage { string val = 1; }
+  message ClusterWithNamespaces {
+    Cluster cluster = 1;
+    repeated NamespaceWithDeployments namespaces = 2;
+  };
+
+  message NamespaceWithDeployments {
+    Namespace namespace = 1;
+    repeated DeploymentWithEndpoints deployments = 2;
+  };
+
+  message DeploymentWithEndpoints {
+    Deployment deployment = 1;
+    repeated Endpoint endpoints = 2;
+  };
 }
+
+message Deployment{}
+message Endpoint{}
+message Namespace{}
+message Cluster{}
 
 message NestedStandalone { string val = 1; }
 

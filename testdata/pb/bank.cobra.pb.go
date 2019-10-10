@@ -229,9 +229,10 @@ func _BankRoundTrip(sample interface{}, fn _BankRoundTripFunc) error {
 
 func _BankDepositClientCommand() *cobra.Command {
 	reqArgs := &DepositRequest{
-		Standalone: &NestedStandalone{},
-		InMessage: &DepositRequest_NestedInMessage{
-			InMessageAgain: &DepositRequest_NestedAgainInMessage{},
+		Clusters: []*DepositRequest_ClusterWithNamespaces{},
+		ClusterWithNamespaces: &DepositRequest_ClusterWithNamespaces{
+			Cluster:    &Cluster{},
+			Namespaces: []*DepositRequest_NamespaceWithDeployments{},
 		},
 	}
 
@@ -264,9 +265,13 @@ func _BankDepositClientCommand() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&reqArgs.Standalone.Val, "standalone-val", "", "get-comment-from-proto")
-	cmd.PersistentFlags().StringVar(&reqArgs.InMessage.InMessageAgain.Val, "inmessage-inmessageagain-val", "", "get-comment-from-proto")
-	cmd.PersistentFlags().StringVar(&reqArgs.InMessage.Val, "inmessage-val", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.Parent, "parent", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.Tenant, "tenant", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.Environment, "environment", "", "get-comment-from-proto")
+	cmd.PersistentFlags() // Warning: list flags are not yet supported (field "Clusters")
+	cmd.PersistentFlags() // Warning: list flags are not yet supported (field "Namespaces")
+	cmd.PersistentFlags().StringVar(&reqArgs.Id, "id", "", "get-comment-from-proto")
+	cmd.PersistentFlags().StringVar(&reqArgs.Name, "name", "", "get-comment-from-proto")
 
 	return cmd
 }

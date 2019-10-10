@@ -190,6 +190,8 @@ func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types pro
 						break
 					}
 				}
+			} else {
+				prefix = ""
 			}
 
 			fmt.Fprintf(w, "// found, recursing with %q\n", desc.GetName())
