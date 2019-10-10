@@ -229,11 +229,11 @@ func _BankRoundTrip(sample interface{}, fn _BankRoundTripFunc) error {
 
 func _BankDepositClientCommand() *cobra.Command {
 	reqArgs := &DepositRequest{
-		Clusters: []*DepositRequest_ClusterWithNamespaces{},
 		ClusterWithNamespaces: &DepositRequest_ClusterWithNamespaces{
 			Cluster:    &Cluster{},
 			Namespaces: []*DepositRequest_NamespaceWithDeployments{},
 		},
+		Clusters: []*DepositRequest_ClusterWithNamespaces{},
 	}
 
 	cmd := &cobra.Command{

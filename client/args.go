@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	pb "github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -203,9 +204,16 @@ func genReqInit(d *pb.DescriptorProto, file *generator.FileDescriptor, types pro
 		}
 	}
 
-	vals := make([]string, 0, len(fields))
-	for n, v := range fields {
-		vals = append(vals, n+": "+v)
+	// Need to be consitent.
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	vals := make([]string, 0, len(keys))
+	for _, k := range keys {
+		vals = append(vals, k+": "+fields[k])
 	}
 	values := "{}"
 	if len(vals) > 0 {
